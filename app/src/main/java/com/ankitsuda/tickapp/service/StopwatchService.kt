@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
@@ -24,10 +25,12 @@ import java.util.concurrent.TimeUnit
 class StopwatchService : LifecycleService() {
     private lateinit var notificationManager: NotificationManager
     private var elapsedMillisBeforePause = 0L
+    private lateinit var mediaPlayer: MediaPlayer
 
     override fun onCreate() {
         super.onCreate()
         setupNotification()
+        setupMediaPlayer()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -74,6 +77,7 @@ class StopwatchService : LifecycleService() {
                 _elapsedMilliSeconds.postValue((System.currentTimeMillis() - startTimeMillis) + elapsedMillisBeforePause)
                 val seconds = TimeUnit.MILLISECONDS.toSeconds(_elapsedMilliSeconds.value!!)
                 if (_elapsedSeconds.value != seconds) {
+                    playSound()
                     _elapsedSeconds.postValue(seconds)
                 }
                 delay(100)
@@ -146,6 +150,14 @@ class StopwatchService : LifecycleService() {
                 )
             )
             .build()
+    }
+
+    private fun setupMediaPlayer() {
+        mediaPlayer = MediaPlayer.create(this, R.raw.coin)
+    }
+
+    private fun playSound() {
+        mediaPlayer.start()
     }
 
     companion object {

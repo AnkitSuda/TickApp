@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -68,9 +69,9 @@ fun TimerText(
 
                     var textSize = 0.sp
                     var textWidth = 0
+                    var textHeight = 0
 
-                    while (textWidth < constraints.maxWidth) {
-
+                    while (textWidth < constraints.maxWidth && textHeight < constraints.maxHeight) {
                         val result = textMeasurer.measure(
                             text = mText,
                             style = TextStyle(
@@ -82,6 +83,7 @@ fun TimerText(
                         )
 
                         textWidth = result.size.width
+                        textHeight = result.size.height
 
                         if (textWidth <= constraints.maxWidth) {
                             textSize = result.layoutInput.style.fontSize
@@ -97,6 +99,7 @@ fun TimerText(
                     .fillMaxSize()
                     .align(Alignment.Center),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
             ) {
                 pair.first.forEach { text ->
                     TimerTextPart(
