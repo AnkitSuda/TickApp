@@ -10,8 +10,6 @@ import android.media.MediaPlayer
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.ankitsuda.tickapp.MainActivity
 import com.ankitsuda.tickapp.R
@@ -19,6 +17,9 @@ import com.ankitsuda.tickapp.util.formatMillisToTimer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -74,11 +75,11 @@ class StopwatchService : LifecycleService() {
         lifecycleScope.launch(Dispatchers.IO) {
             val startTimeMillis = System.currentTimeMillis()
             while (_isTracking.value!!) {
-                _elapsedMilliSeconds.postValue((System.currentTimeMillis() - startTimeMillis) + elapsedMillisBeforePause)
+                _elapsedMilliSeconds.emit((System.currentTimeMillis() - startTimeMillis) + elapsedMillisBeforePause)
                 val seconds = TimeUnit.MILLISECONDS.toSeconds(_elapsedMilliSeconds.value!!)
                 if (_elapsedSeconds.value != seconds) {
+                    _elapsedSeconds.emit(seconds)
                     playSound()
-                    _elapsedSeconds.postValue(seconds)
                 }
                 delay(100)
             }
@@ -96,15 +97,17 @@ class StopwatchService : LifecycleService() {
     private fun setupNotification() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        _elapsedSeconds.observe(this) { elapsedSeconds ->
-            if (_isTracking.value!!) {
-                notificationManager.notify(
-                    NOTIFICATION_ID,
-                    getNotification(
-                        getString(R.string.stopwatch_running),
-                        formatMillisToTimer(TimeUnit.SECONDS.toMillis(elapsedSeconds))
+        lifecycleScope.launch {
+            _elapsedSeconds.collectLatest { elapsedSeconds ->
+                if (_isTracking.value) {
+                    notificationManager.notify(
+                        NOTIFICATION_ID,
+                        getNotification(
+                            getString(R.string.stopwatch_running),
+                            formatMillisToTimer(TimeUnit.SECONDS.toMillis(elapsedSeconds))
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -165,14 +168,14 @@ class StopwatchService : LifecycleService() {
         const val NOTIFICATION_CHANNEL_ID = "473"
         const val NOTIFICATION_CHANNEL_NAME = "stopwatch_channel"
 
-        private val _isTracking = MutableLiveData(false)
-        val isTracking: LiveData<Boolean> = _isTracking
+        private val _isTracking = MutableStateFlow(false)
+        val isTracking: Flow<Boolean> = _isTracking
 
-        private val _elapsedSeconds = MutableLiveData(0L)
-        val elapsedSeconds: LiveData<Long> = _elapsedSeconds
+        private val _elapsedSeconds = MutableStateFlow(0L)
+        val elapsedSeconds: Flow<Long> = _elapsedSeconds
 
-        private val _elapsedMilliSeconds = MutableLiveData(0L)
-        val elapsedMilliSeconds: LiveData<Long> = _elapsedMilliSeconds
+        private val _elapsedMilliSeconds = MutableStateFlow(0L)
+        val elapsedMilliSeconds: Flow<Long> = _elapsedMilliSeconds
     }
 
     enum class ServiceState {

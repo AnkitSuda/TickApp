@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -27,8 +28,8 @@ import com.ankitsuda.tickapp.ui.components.TimerText
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
-    val isTracking by StopwatchService.isTracking.observeAsState(false)
-    val elapsedSeconds by StopwatchService.elapsedSeconds.observeAsState(0)
+    val isTracking by StopwatchService.isTracking.collectAsState(false)
+    val elapsedSeconds by StopwatchService.elapsedSeconds.collectAsState( 0)
     val context = LocalContext.current
 
     fun toggle() {
